@@ -16,6 +16,7 @@ import torch
 import torch.utils.data
 
 from fairseq.dictionary import Dictionary
+#these classes probably loads datasets from paths to torch tensors which have 1-indexed token indices
 from fairseq.indexed_dataset import IndexedDataset, IndexedInMemoryDataset, IndexedRawTextDataset
 
 
@@ -45,6 +46,8 @@ def load_dictionaries(path, src_lang, dst_lang):
     return src_dict, dst_dict
 
 
+#this function is used while training to take the databin containing splits and src and trg langs
+#and returns LanguagePairDatasets for both splits.
 def load_dataset(path, load_splits, src=None, dst=None):
     """Loads specified data splits (e.g., test, train or valid) from the
     specified folder and check that files exist."""
@@ -74,7 +77,8 @@ def load_dataset(path, load_splits, src=None, dst=None):
 
     def fmt_path(fmt, *args):
         return os.path.join(path, fmt.format(*args))
-
+    #for each split create paths for src and trg and load a LanguagePairDataset object into one of the split of 
+    #LanguageDataset object
     for split in load_splits:
         for k in itertools.count():
             prefix = "{}{}".format(split, k if k > 0 else '')
@@ -117,7 +121,8 @@ def load_raw_text_dataset(path, load_splits, src=None, dst=None):
         )
     return dataset
 
-
+#languageDatasets object has splits dictionary which stores LanguagePairDataset of all the splits
+#dataloader functions can be applied on different splits in splits dictionary.
 class LanguageDatasets(object):
     def __init__(self, src, dst, src_dict, dst_dict):
         self.src = src
@@ -150,6 +155,7 @@ class LanguageDatasets(object):
                         skip_invalid_size_inputs_valid_test=False,
                         descending=False):
         dataset = self.splits[split]
+        #batch_sampler has list of batch-indices(i.e list of list of indices of a samples) with each indices
         batch_sampler = list(batches_by_size(
             dataset.src, dataset.dst, max_tokens, max_sentences,
             max_positions=max_positions,
@@ -174,7 +180,7 @@ def skip_group_enumerator(it, ngpus, offset=0):
     if len(res) > 0:
         yield (idx, res)
 
-
+#because indexing this dataset object gives you samples having keys as src and trg
 class LanguagePairDataset(object):
 
     # padding constants
@@ -199,17 +205,20 @@ class LanguagePairDataset(object):
 
     def __len__(self):
         return len(self.src)
-
+    #this function is used as collater function while creating dataloader--> collater function should only
+    #take samples(iterable) as input and should return dictionary with each keys having batches.
     def collater(self, samples):
         return LanguagePairDataset.collate(samples, self.pad_idx, self.eos_idx)
-
+    
+    #pad_idx and eox_idx is used to
     @staticmethod
     def collate(samples, pad_idx, eos_idx):
-
+        #you may merge different keys of different sample dictionaries differently.
         def merge(key, left_pad, move_eos_to_beginning=False):
             return LanguagePairDataset.collate_tokens(
                 [s[key] for s in samples], pad_idx, eos_idx, left_pad, move_eos_to_beginning)
-
+        #hence ids for each sample in the batch, src tokens input tokens and target tokens are 
+        #produced while using dataloader
         return {
             'id': torch.LongTensor([s['id'].item() for s in samples]),
             'src_tokens': merge('source', left_pad=LanguagePairDataset.LEFT_PAD_SOURCE),
@@ -221,9 +230,15 @@ class LanguagePairDataset(object):
             'ntokens': sum(len(s['target']) for s in samples),
         }
 
+    #move_eos_to_beginning is true for targets
+    #difference between input_tokens and target is former has eos at the beginning and the 
+    #corresponding hiddenstate of eos should produce first token of target. Similarly first token
+    #i.e token next to eos should produce 2nd token of target.
     @staticmethod
     def collate_tokens(values, pad_idx, eos_idx, left_pad, move_eos_to_beginning):
+        #consider the max length of sentence in target batch of samples as size
         size = max(v.size(0) for v in values)
+        #new function creates new data of same datatype with dimentions = batchsizexsize
         res = values[0].new(len(values), size).fill_(pad_idx)
 
         def copy_tensor(src, dst):
@@ -316,7 +331,7 @@ def batches_by_size(src, dst, max_tokens=None, max_sentences=None,
         src, dst, indices, max_tokens, max_sentences, max_positions,
         ignore_invalid_inputs, allow_different_src_lens=False)
 
-
+#this function is used as batch sampler for training dataloader.
 def shuffled_batches_by_size(src, dst, max_tokens=None, max_sentences=None,
                              epoch=1, sample=0, max_positions=(1024, 1024),
                              sort_by_source_size=False):
