@@ -11,8 +11,18 @@ import collections
 import os
 import torch
 import math
-
+#data has functions on data.
+#options have 5 functions:
+# add_dataset,optimization,generation,model,checkpoint_args-->returns the groups not the parser and get_parser function
+# parser is an object of ArgumentParser class in argparse package.
+# make sure to set sample without replacement with right number of batches.
+#change momentum to 0.9
+#model arguments can be changed according to fconv.py file.
+#utils just have functions which will be used in train.py, generate.py etc.
 from fairseq import data, options, utils
+#AverageMeter and all other meters are classes.
+#AverageMeter and TimeMeter has reset and update functions other classes have functions like start stop
+#and attributes like avg and time_elapsed
 from fairseq.meters import AverageMeter, StopwatchMeter, TimeMeter
 from fairseq.multiprocessing_trainer import MultiprocessingTrainer
 
@@ -33,12 +43,16 @@ def main():
     options.add_optimization_args(parser)
     options.add_checkpoint_args(parser)
     options.add_model_args(parser)
-
+    
+    #utils has a function which will convert given parser into an object with attributes as the arguments
+    #parsed by the parser. by using parser.parse_args()
+    #ans args.model is updated with args.model[args.arch] by using functions in models
     args = utils.parse_args_and_arch(parser)
-
+    
+    #log format is being set
     if args.no_progress_bar and args.log_format is None:
         args.log_format = 'simple'
-
+    #args.save_dir is created
     if not os.path.exists(args.save_dir):
         os.makedirs(args.save_dir)
     torch.manual_seed(args.seed)
@@ -46,6 +60,7 @@ def main():
     # Load dataset
     splits = ['train', 'valid']
     if data.has_binary_files(args.data, splits):
+        #dataset is object
         dataset = data.load_dataset(args.data, splits, args.source_lang, args.target_lang)
     else:
         dataset = data.load_raw_text_dataset(args.data, splits, args.source_lang, args.target_lang)
