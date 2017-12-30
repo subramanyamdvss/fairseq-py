@@ -396,8 +396,10 @@ def parse_arch(args):
     args.decoder_attention = getattr(args, 'decoder_attention', 'True')
     return args
 
-
+#
 def build_model(args, src_dict, dst_dict):
+    #so there are three modules FConvEncoder, FConvDecoder, FConvModel
+    #so attention module is in FConvModel
     encoder = FConvEncoder(
         src_dict,
         embed_dim=args.encoder_embed_dim,
