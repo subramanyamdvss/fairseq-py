@@ -60,7 +60,8 @@ def main():
     # Load dataset
     splits = ['train', 'valid']
     if data.has_binary_files(args.data, splits):
-        #dataset is object
+        #dataset.splits['train'], dataset.splits['valid'] have datasets in it. 
+        #and have dataset.trainloader and .valloader
         dataset = data.load_dataset(args.data, splits, args.source_lang, args.target_lang)
     else:
         dataset = data.load_raw_text_dataset(args.data, splits, args.source_lang, args.target_lang)
@@ -82,6 +83,7 @@ def main():
         args.num_gpus, args.max_tokens, args.max_sentences))
 
     # Build model and criterion
+    # there is a buildmodel function from the fconv.py
     model = utils.build_model(args, dataset.src_dict, dataset.dst_dict)
     criterion = utils.build_criterion(args, dataset.src_dict, dataset.dst_dict)
     print('| model {}, criterion {}'.format(args.arch, criterion.__class__.__name__))
