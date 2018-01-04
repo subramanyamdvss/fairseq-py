@@ -75,7 +75,7 @@ class SequenceGenerator(object):
             #net_input has src_tokens and input_tokens batch
             input = s['net_input']
             #every sentence in batch has same sentence length srclen
-            #src_tokens has bszx1xsrclen
+            #src_tokens has bsz x 1 x srclen
             srclen = input['src_tokens'].size(1)
             if timer is not None:
                 timer.start()
