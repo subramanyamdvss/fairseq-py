@@ -109,6 +109,8 @@ def main():
                     print('A-{}\t{}'.format(sample_id, ' '.join(map(str, alignment))))
 
                 # Score only the top hypothesis
+                # if you are not using bpe then dont use --remove_bpe without changing the code for 
+                #remove_bpe functionality at every function e.g:post_process_prediction, get_original_text.
                 if i == 0:
                     if align_dict is not None or args.remove_bpe is not None:
                         # Convert back to tokens for evaluation with unk replacement and/or without BPE
