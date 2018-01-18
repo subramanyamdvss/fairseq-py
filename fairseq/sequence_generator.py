@@ -224,6 +224,7 @@ class SequenceGenerator(object):
             return num_finished
 
         reorder_state = None
+        #so maxlen no. of times hypothesis are generated.
         for step in range(maxlen + 1):  # one extra step for EOS marker
             # reorder decoder internal states based on the prev choice of beams
             if reorder_state is not None:
